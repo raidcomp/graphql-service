@@ -6,9 +6,10 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
+	users_service "github.com/raidcomp/users-service/proto"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -28,7 +29,22 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id *string, login *string) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	idStr := *id
+
+	getUserResp, err := r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
+		Id: idStr,
+	})
+	if err != nil {
+		return nil, gqlerror.Errorf("error requesting user")
+	}
+
+	return &model.User{
+		ID:          getUserResp.User.Id,
+		Login:       getUserResp.User.Login,
+		Email:       getUserResp.User.Email,
+		CreatedTime: getUserResp.User.CreatedAt.AsTime(),
+		UpdatedTime: getUserResp.User.UpdatedAt.AsTime(),
+	}, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

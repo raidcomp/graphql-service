@@ -15,7 +15,6 @@ func NewUsersClient() users_service.UsersClient {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	defer conn.Close()
 
 	client := users_service.NewUsersClient(conn)
 
