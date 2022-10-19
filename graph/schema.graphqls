@@ -1,0 +1,32 @@
+scalar Time
+
+type User {
+  id: ID!
+  login: String!
+  email: String!
+  createdTime: Time!
+  updatedTime: Time!
+}
+
+type Query {
+  user(id: ID, login: String): User
+}
+
+input LoginUserInput {
+  id: ID!
+}
+
+input CreateUserInput {
+  text: String!
+  userId: String!
+}
+
+input RefreshTokenInput {
+  token: String!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+  loginUser(input: LoginUserInput!): User!
+  refreshToken(input: RefreshTokenInput!): User!
+}
