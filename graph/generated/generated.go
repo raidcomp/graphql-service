@@ -44,6 +44,16 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	CreateUserPayload struct {
+		Error func(childComplexity int) int
+		User  func(childComplexity int) int
+	}
+
+	CreateUserPayloadError struct {
+		LoginInvalid func(childComplexity int) int
+		LoginTaken   func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateUser   func(childComplexity int, input model.CreateUserInput) int
 		LoginUser    func(childComplexity int, input model.LoginUserInput) int
@@ -64,7 +74,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error)
+	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error)
 	LoginUser(ctx context.Context, input model.LoginUserInput) (*model.User, error)
 	RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.User, error)
 }
@@ -86,6 +96,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "CreateUserPayload.error":
+		if e.complexity.CreateUserPayload.Error == nil {
+			break
+		}
+
+		return e.complexity.CreateUserPayload.Error(childComplexity), true
+
+	case "CreateUserPayload.user":
+		if e.complexity.CreateUserPayload.User == nil {
+			break
+		}
+
+		return e.complexity.CreateUserPayload.User(childComplexity), true
+
+	case "CreateUserPayloadError.loginInvalid":
+		if e.complexity.CreateUserPayloadError.LoginInvalid == nil {
+			break
+		}
+
+		return e.complexity.CreateUserPayloadError.LoginInvalid(childComplexity), true
+
+	case "CreateUserPayloadError.loginTaken":
+		if e.complexity.CreateUserPayloadError.LoginTaken == nil {
+			break
+		}
+
+		return e.complexity.CreateUserPayloadError.LoginTaken(childComplexity), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -268,8 +306,18 @@ input RefreshTokenInput {
   token: String!
 }
 
+type CreateUserPayload {
+  user: User
+  error: CreateUserPayloadError
+}
+
+type CreateUserPayloadError {
+  loginTaken: Boolean!
+  loginInvalid: Boolean!
+}
+
 type Mutation {
-  createUser(input: CreateUserInput!): User!
+  createUser(input: CreateUserInput!): CreateUserPayload!
   loginUser(input: LoginUserInput!): User!
   refreshToken(input: RefreshTokenInput!): User!
 }`, BuiltIn: false},
@@ -402,6 +450,194 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _CreateUserPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateUserPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "login":
+				return ec.fieldContext_User_login(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "createdTime":
+				return ec.fieldContext_User_createdTime(ctx, field)
+			case "updatedTime":
+				return ec.fieldContext_User_updatedTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateUserPayload_error(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayload_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CreateUserPayloadError)
+	fc.Result = res
+	return ec.marshalOCreateUserPayloadError2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐCreateUserPayloadError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateUserPayload_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "loginTaken":
+				return ec.fieldContext_CreateUserPayloadError_loginTaken(ctx, field)
+			case "loginInvalid":
+				return ec.fieldContext_CreateUserPayloadError_loginInvalid(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateUserPayloadError", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateUserPayloadError_loginTaken(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayloadError_loginTaken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LoginTaken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateUserPayloadError_loginTaken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateUserPayloadError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateUserPayloadError_loginInvalid(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayloadError_loginInvalid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LoginInvalid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateUserPayloadError_loginInvalid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateUserPayloadError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createUser(ctx, field)
 	if err != nil {
@@ -428,9 +664,9 @@ func (ec *executionContext) _Mutation_createUser(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.CreateUserPayload)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNCreateUserPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐCreateUserPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -441,18 +677,12 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "login":
-				return ec.fieldContext_User_login(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "createdTime":
-				return ec.fieldContext_User_createdTime(ctx, field)
-			case "updatedTime":
-				return ec.fieldContext_User_updatedTime(ctx, field)
+			case "user":
+				return ec.fieldContext_CreateUserPayload_user(ctx, field)
+			case "error":
+				return ec.fieldContext_CreateUserPayload_error(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateUserPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -2889,6 +3119,70 @@ func (ec *executionContext) unmarshalInputRefreshTokenInput(ctx context.Context,
 
 // region    **************************** object.gotpl ****************************
 
+var createUserPayloadImplementors = []string{"CreateUserPayload"}
+
+func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.SelectionSet, obj *model.CreateUserPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createUserPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateUserPayload")
+		case "user":
+
+			out.Values[i] = ec._CreateUserPayload_user(ctx, field, obj)
+
+		case "error":
+
+			out.Values[i] = ec._CreateUserPayload_error(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var createUserPayloadErrorImplementors = []string{"CreateUserPayloadError"}
+
+func (ec *executionContext) _CreateUserPayloadError(ctx context.Context, sel ast.SelectionSet, obj *model.CreateUserPayloadError) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createUserPayloadErrorImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateUserPayloadError")
+		case "loginTaken":
+
+			out.Values[i] = ec._CreateUserPayloadError_loginTaken(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "loginInvalid":
+
+			out.Values[i] = ec._CreateUserPayloadError_loginInvalid(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3402,6 +3696,20 @@ func (ec *executionContext) unmarshalNCreateUserInput2githubᚗcomᚋraidcompᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNCreateUserPayload2githubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐCreateUserPayload(ctx context.Context, sel ast.SelectionSet, v model.CreateUserPayload) graphql.Marshaler {
+	return ec._CreateUserPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateUserPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐCreateUserPayload(ctx context.Context, sel ast.SelectionSet, v *model.CreateUserPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateUserPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3748,6 +4056,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOCreateUserPayloadError2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐCreateUserPayloadError(ctx context.Context, sel ast.SelectionSet, v *model.CreateUserPayloadError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CreateUserPayloadError(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

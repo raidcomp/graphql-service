@@ -25,8 +25,18 @@ input RefreshTokenInput {
   token: String!
 }
 
+type CreateUserPayload {
+  user: User
+  error: CreateUserPayloadError
+}
+
+type CreateUserPayloadError {
+  loginTaken: Boolean!
+  loginInvalid: Boolean!
+}
+
 type Mutation {
-  createUser(input: CreateUserInput!): User!
+  createUser(input: CreateUserInput!): CreateUserPayload!
   loginUser(input: LoginUserInput!): User!
   refreshToken(input: RefreshTokenInput!): User!
 }

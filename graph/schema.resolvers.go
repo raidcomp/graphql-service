@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
 	users_service "github.com/raidcomp/users-service/proto"
@@ -13,7 +14,7 @@ import (
 )
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error) {
 	createUserResp, err := r.UsersClient.CreateUser(ctx, &users_service.CreateUserRequest{
 		Email: input.Email,
 		Login: input.Login,
@@ -22,13 +23,15 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		return nil, gqlerror.Errorf("error creating user")
 	}
 
-	return &model.User{
-		ID:          createUserResp.User.Id,
-		Login:       createUserResp.User.Login,
-		Email:       createUserResp.User.Email,
-		CreatedTime: createUserResp.User.CreatedAt.AsTime(),
-		UpdatedTime: createUserResp.User.UpdatedAt.AsTime(),
-	}, nil
+	return &model.CreateUserPayload{
+		User: &model.User{
+			ID:          createUserResp.User.Id,
+			Login:       createUserResp.User.Login,
+			Email:       createUserResp.User.Email,
+			CreatedTime: createUserResp.User.CreatedAt.AsTime(),
+			UpdatedTime: createUserResp.User.UpdatedAt.AsTime(),
+		},
+	}, err
 }
 
 // LoginUser is the resolver for the loginUser field.
@@ -43,11 +46,20 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id *string, login *string) (*model.User, error) {
-	idStr := *id
+	var getUserResp *users_service.GetUserResponse
+	var err error
+	if id != nil {
+		getUserResp, err = r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
+			Id: *id,
+		})
+	} else if login != nil {
+		getUserResp, err = r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
+			Login: *login,
+		})
+	} else {
+		return nil, gqlerror.Errorf("id or login are required")
+	}
 
-	getUserResp, err := r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
-		Id: idStr,
-	})
 	if err != nil {
 		return nil, gqlerror.Errorf("error requesting user")
 	}

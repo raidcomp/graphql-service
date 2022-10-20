@@ -11,6 +11,16 @@ type CreateUserInput struct {
 	Email string `json:"email"`
 }
 
+type CreateUserPayload struct {
+	User  *User                   `json:"user"`
+	Error *CreateUserPayloadError `json:"error"`
+}
+
+type CreateUserPayloadError struct {
+	LoginTaken   bool `json:"loginTaken"`
+	LoginInvalid bool `json:"loginInvalid"`
+}
+
 type LoginUserInput struct {
 	ID string `json:"id"`
 }
