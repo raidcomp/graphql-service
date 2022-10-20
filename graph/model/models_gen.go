@@ -7,8 +7,8 @@ import (
 )
 
 type CreateUserInput struct {
-	Text   string `json:"text"`
-	UserID string `json:"userId"`
+	Login string `json:"login"`
+	Email string `json:"email"`
 }
 
 type LoginUserInput struct {

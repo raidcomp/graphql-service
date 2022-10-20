@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 	"fmt"
+
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
 	users_service "github.com/raidcomp/users-service/proto"

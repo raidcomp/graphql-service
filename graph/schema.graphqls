@@ -17,8 +17,8 @@ input LoginUserInput {
 }
 
 input CreateUserInput {
-  text: String!
-  userId: String!
+  login: String!
+  email: String!
 }
 
 input RefreshTokenInput {
