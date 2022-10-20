@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 	"fmt"
-
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
 	users_service "github.com/raidcomp/users-service/proto"
@@ -15,7 +14,21 @@ import (
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
+	createUserResp, err := r.UsersClient.CreateUser(ctx, &users_service.CreateUserRequest{
+		Email: input.Email,
+		Login: input.Login,
+	})
+	if err != nil {
+		return nil, gqlerror.Errorf("error creating user")
+	}
+
+	return &model.User{
+		ID:          createUserResp.User.Id,
+		Login:       createUserResp.User.Login,
+		Email:       createUserResp.User.Email,
+		CreatedTime: createUserResp.User.CreatedAt.AsTime(),
+		UpdatedTime: createUserResp.User.UpdatedAt.AsTime(),
+	}, nil
 }
 
 // LoginUser is the resolver for the loginUser field.
@@ -37,6 +50,10 @@ func (r *queryResolver) User(ctx context.Context, id *string, login *string) (*m
 	})
 	if err != nil {
 		return nil, gqlerror.Errorf("error requesting user")
+	}
+
+	if getUserResp.User == nil {
+		return nil, nil
 	}
 
 	return &model.User{
