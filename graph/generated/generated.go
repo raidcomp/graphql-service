@@ -46,12 +46,23 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	CreateUserPayload struct {
 		Error func(childComplexity int) int
+		Token func(childComplexity int) int
 		User  func(childComplexity int) int
 	}
 
 	CreateUserPayloadError struct {
-		LoginInvalid func(childComplexity int) int
-		LoginTaken   func(childComplexity int) int
+		IsLoginInvalid func(childComplexity int) int
+		IsLoginTaken   func(childComplexity int) int
+	}
+
+	LoginUserPayload struct {
+		Error func(childComplexity int) int
+		Token func(childComplexity int) int
+		User  func(childComplexity int) int
+	}
+
+	LoginUserPayloadError struct {
+		IsPasswordIncorrect func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -75,7 +86,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error)
-	LoginUser(ctx context.Context, input model.LoginUserInput) (*model.User, error)
+	LoginUser(ctx context.Context, input model.LoginUserInput) (*model.LoginUserPayload, error)
 	RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.User, error)
 }
 type QueryResolver interface {
@@ -104,6 +115,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateUserPayload.Error(childComplexity), true
 
+	case "CreateUserPayload.token":
+		if e.complexity.CreateUserPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.CreateUserPayload.Token(childComplexity), true
+
 	case "CreateUserPayload.user":
 		if e.complexity.CreateUserPayload.User == nil {
 			break
@@ -111,19 +129,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateUserPayload.User(childComplexity), true
 
-	case "CreateUserPayloadError.loginInvalid":
-		if e.complexity.CreateUserPayloadError.LoginInvalid == nil {
+	case "CreateUserPayloadError.isLoginInvalid":
+		if e.complexity.CreateUserPayloadError.IsLoginInvalid == nil {
 			break
 		}
 
-		return e.complexity.CreateUserPayloadError.LoginInvalid(childComplexity), true
+		return e.complexity.CreateUserPayloadError.IsLoginInvalid(childComplexity), true
 
-	case "CreateUserPayloadError.loginTaken":
-		if e.complexity.CreateUserPayloadError.LoginTaken == nil {
+	case "CreateUserPayloadError.isLoginTaken":
+		if e.complexity.CreateUserPayloadError.IsLoginTaken == nil {
 			break
 		}
 
-		return e.complexity.CreateUserPayloadError.LoginTaken(childComplexity), true
+		return e.complexity.CreateUserPayloadError.IsLoginTaken(childComplexity), true
+
+	case "LoginUserPayload.error":
+		if e.complexity.LoginUserPayload.Error == nil {
+			break
+		}
+
+		return e.complexity.LoginUserPayload.Error(childComplexity), true
+
+	case "LoginUserPayload.token":
+		if e.complexity.LoginUserPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.LoginUserPayload.Token(childComplexity), true
+
+	case "LoginUserPayload.user":
+		if e.complexity.LoginUserPayload.User == nil {
+			break
+		}
+
+		return e.complexity.LoginUserPayload.User(childComplexity), true
+
+	case "LoginUserPayloadError.isPasswordIncorrect":
+		if e.complexity.LoginUserPayloadError.IsPasswordIncorrect == nil {
+			break
+		}
+
+		return e.complexity.LoginUserPayloadError.IsPasswordIncorrect(childComplexity), true
 
 	case "Mutation.createUser":
 		if e.complexity.Mutation.CreateUser == nil {
@@ -294,12 +340,18 @@ type Query {
 }
 
 input LoginUserInput {
-  id: ID!
+  # TODO: Obviously this shouldn't be a raw string
+  # We should hash with a nonce on the client and send that
+  password: String!
 }
 
 input CreateUserInput {
   login: String!
   email: String!
+
+  # TODO: Obviously this shouldn't be a raw string
+  # We should hash with a nonce on the client and send that
+  password: String!
 }
 
 input RefreshTokenInput {
@@ -308,17 +360,28 @@ input RefreshTokenInput {
 
 type CreateUserPayload {
   user: User
+  token: String
   error: CreateUserPayloadError
 }
 
 type CreateUserPayloadError {
-  loginTaken: Boolean!
-  loginInvalid: Boolean!
+  isLoginTaken: Boolean!
+  isLoginInvalid: Boolean!
+}
+
+type LoginUserPayload {
+  user: User
+  token: String
+  error: LoginUserPayloadError
+}
+
+type LoginUserPayloadError {
+  isPasswordIncorrect: Boolean!
 }
 
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload!
-  loginUser(input: LoginUserInput!): User!
+  loginUser(input: LoginUserInput!): LoginUserPayload!
   refreshToken(input: RefreshTokenInput!): User!
 }`, BuiltIn: false},
 }
@@ -503,6 +566,47 @@ func (ec *executionContext) fieldContext_CreateUserPayload_user(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateUserPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayload_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateUserPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateUserPayload_error(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateUserPayload_error(ctx, field)
 	if err != nil {
@@ -539,10 +643,10 @@ func (ec *executionContext) fieldContext_CreateUserPayload_error(ctx context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "loginTaken":
-				return ec.fieldContext_CreateUserPayloadError_loginTaken(ctx, field)
-			case "loginInvalid":
-				return ec.fieldContext_CreateUserPayloadError_loginInvalid(ctx, field)
+			case "isLoginTaken":
+				return ec.fieldContext_CreateUserPayloadError_isLoginTaken(ctx, field)
+			case "isLoginInvalid":
+				return ec.fieldContext_CreateUserPayloadError_isLoginInvalid(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CreateUserPayloadError", field.Name)
 		},
@@ -550,8 +654,8 @@ func (ec *executionContext) fieldContext_CreateUserPayload_error(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateUserPayloadError_loginTaken(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateUserPayloadError_loginTaken(ctx, field)
+func (ec *executionContext) _CreateUserPayloadError_isLoginTaken(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayloadError_isLoginTaken(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -564,7 +668,7 @@ func (ec *executionContext) _CreateUserPayloadError_loginTaken(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LoginTaken, nil
+		return obj.IsLoginTaken, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -581,7 +685,7 @@ func (ec *executionContext) _CreateUserPayloadError_loginTaken(ctx context.Conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateUserPayloadError_loginTaken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateUserPayloadError_isLoginTaken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateUserPayloadError",
 		Field:      field,
@@ -594,8 +698,8 @@ func (ec *executionContext) fieldContext_CreateUserPayloadError_loginTaken(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateUserPayloadError_loginInvalid(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateUserPayloadError_loginInvalid(ctx, field)
+func (ec *executionContext) _CreateUserPayloadError_isLoginInvalid(ctx context.Context, field graphql.CollectedField, obj *model.CreateUserPayloadError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateUserPayloadError_isLoginInvalid(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -608,7 +712,7 @@ func (ec *executionContext) _CreateUserPayloadError_loginInvalid(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LoginInvalid, nil
+		return obj.IsLoginInvalid, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -625,9 +729,192 @@ func (ec *executionContext) _CreateUserPayloadError_loginInvalid(ctx context.Con
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateUserPayloadError_loginInvalid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateUserPayloadError_isLoginInvalid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateUserPayloadError",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginUserPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.LoginUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginUserPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginUserPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "login":
+				return ec.fieldContext_User_login(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "createdTime":
+				return ec.fieldContext_User_createdTime(ctx, field)
+			case "updatedTime":
+				return ec.fieldContext_User_updatedTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginUserPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.LoginUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginUserPayload_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginUserPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginUserPayload_error(ctx context.Context, field graphql.CollectedField, obj *model.LoginUserPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginUserPayload_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.LoginUserPayloadError)
+	fc.Result = res
+	return ec.marshalOLoginUserPayloadError2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐLoginUserPayloadError(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginUserPayload_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginUserPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "isPasswordIncorrect":
+				return ec.fieldContext_LoginUserPayloadError_isPasswordIncorrect(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LoginUserPayloadError", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LoginUserPayloadError_isPasswordIncorrect(ctx context.Context, field graphql.CollectedField, obj *model.LoginUserPayloadError) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LoginUserPayloadError_isPasswordIncorrect(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsPasswordIncorrect, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LoginUserPayloadError_isPasswordIncorrect(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LoginUserPayloadError",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -679,6 +966,8 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 			switch field.Name {
 			case "user":
 				return ec.fieldContext_CreateUserPayload_user(ctx, field)
+			case "token":
+				return ec.fieldContext_CreateUserPayload_token(ctx, field)
 			case "error":
 				return ec.fieldContext_CreateUserPayload_error(ctx, field)
 			}
@@ -725,9 +1014,9 @@ func (ec *executionContext) _Mutation_loginUser(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.LoginUserPayload)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNLoginUserPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐLoginUserPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_loginUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -738,18 +1027,14 @@ func (ec *executionContext) fieldContext_Mutation_loginUser(ctx context.Context,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "login":
-				return ec.fieldContext_User_login(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "createdTime":
-				return ec.fieldContext_User_createdTime(ctx, field)
-			case "updatedTime":
-				return ec.fieldContext_User_updatedTime(ctx, field)
+			case "user":
+				return ec.fieldContext_LoginUserPayload_user(ctx, field)
+			case "token":
+				return ec.fieldContext_LoginUserPayload_token(ctx, field)
+			case "error":
+				return ec.fieldContext_LoginUserPayload_error(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LoginUserPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -3026,7 +3311,7 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"login", "email"}
+	fieldsInOrder := [...]string{"login", "email", "password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3049,6 +3334,14 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
+		case "password":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -3062,18 +3355,18 @@ func (ec *executionContext) unmarshalInputLoginUserInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id"}
+	fieldsInOrder := [...]string{"password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "id":
+		case "password":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
+			it.Password, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3133,6 +3426,10 @@ func (ec *executionContext) _CreateUserPayload(ctx context.Context, sel ast.Sele
 
 			out.Values[i] = ec._CreateUserPayload_user(ctx, field, obj)
 
+		case "token":
+
+			out.Values[i] = ec._CreateUserPayload_token(ctx, field, obj)
+
 		case "error":
 
 			out.Values[i] = ec._CreateUserPayload_error(ctx, field, obj)
@@ -3158,16 +3455,77 @@ func (ec *executionContext) _CreateUserPayloadError(ctx context.Context, sel ast
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateUserPayloadError")
-		case "loginTaken":
+		case "isLoginTaken":
 
-			out.Values[i] = ec._CreateUserPayloadError_loginTaken(ctx, field, obj)
+			out.Values[i] = ec._CreateUserPayloadError_isLoginTaken(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "loginInvalid":
+		case "isLoginInvalid":
 
-			out.Values[i] = ec._CreateUserPayloadError_loginInvalid(ctx, field, obj)
+			out.Values[i] = ec._CreateUserPayloadError_isLoginInvalid(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var loginUserPayloadImplementors = []string{"LoginUserPayload"}
+
+func (ec *executionContext) _LoginUserPayload(ctx context.Context, sel ast.SelectionSet, obj *model.LoginUserPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loginUserPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LoginUserPayload")
+		case "user":
+
+			out.Values[i] = ec._LoginUserPayload_user(ctx, field, obj)
+
+		case "token":
+
+			out.Values[i] = ec._LoginUserPayload_token(ctx, field, obj)
+
+		case "error":
+
+			out.Values[i] = ec._LoginUserPayload_error(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var loginUserPayloadErrorImplementors = []string{"LoginUserPayloadError"}
+
+func (ec *executionContext) _LoginUserPayloadError(ctx context.Context, sel ast.SelectionSet, obj *model.LoginUserPayloadError) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, loginUserPayloadErrorImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LoginUserPayloadError")
+		case "isPasswordIncorrect":
+
+			out.Values[i] = ec._LoginUserPayloadError_isPasswordIncorrect(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3730,6 +4088,20 @@ func (ec *executionContext) unmarshalNLoginUserInput2githubᚗcomᚋraidcompᚋg
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNLoginUserPayload2githubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐLoginUserPayload(ctx context.Context, sel ast.SelectionSet, v model.LoginUserPayload) graphql.Marshaler {
+	return ec._LoginUserPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLoginUserPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐLoginUserPayload(ctx context.Context, sel ast.SelectionSet, v *model.LoginUserPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LoginUserPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRefreshTokenInput2githubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐRefreshTokenInput(ctx context.Context, v interface{}) (model.RefreshTokenInput, error) {
 	res, err := ec.unmarshalInputRefreshTokenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4079,6 +4451,13 @@ func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalID(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOLoginUserPayloadError2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐLoginUserPayloadError(ctx context.Context, sel ast.SelectionSet, v *model.LoginUserPayloadError) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._LoginUserPayloadError(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

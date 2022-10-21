@@ -7,8 +7,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/raidcomp/graphql-service/auth"
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
+	"github.com/raidcomp/graphql-service/middleware"
 	users_service "github.com/raidcomp/users-service/proto"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -23,6 +25,11 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		return nil, gqlerror.Errorf("error creating user")
 	}
 
+	token, err := auth.GenerateToken(ctx, createUserResp.User.Id)
+	if err != nil {
+		return nil, gqlerror.Errorf("error generating auth token for user")
+	}
+
 	return &model.CreateUserPayload{
 		User: &model.User{
 			ID:          createUserResp.User.Id,
@@ -31,12 +38,36 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 			CreatedTime: createUserResp.User.CreatedAt.AsTime(),
 			UpdatedTime: createUserResp.User.UpdatedAt.AsTime(),
 		},
+		Token: &token,
 	}, err
 }
 
 // LoginUser is the resolver for the loginUser field.
-func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: LoginUser - loginUser"))
+func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserInput) (*model.LoginUserPayload, error) {
+	userID := middleware.UserID(ctx)
+	if userID == "" {
+		return nil, nil
+	}
+
+	_, err := r.UsersClient.CheckUserPassword(ctx, &users_service.CheckUserPasswordRequest{
+		Id:       userID,
+		Password: input.Password,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// We're good, generate token for user
+	token, err := auth.GenerateToken(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.LoginUserPayload{
+		User:  nil, // TODO: get this I guess? Will need to create NewUserResolver(userID)
+		Token: &token,
+		Error: nil,
+	}, nil
 }
 
 // RefreshToken is the resolver for the refreshToken field.

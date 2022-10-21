@@ -7,22 +7,34 @@ import (
 )
 
 type CreateUserInput struct {
-	Login string `json:"login"`
-	Email string `json:"email"`
+	Login    string `json:"login"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type CreateUserPayload struct {
 	User  *User                   `json:"user"`
+	Token *string                 `json:"token"`
 	Error *CreateUserPayloadError `json:"error"`
 }
 
 type CreateUserPayloadError struct {
-	LoginTaken   bool `json:"loginTaken"`
-	LoginInvalid bool `json:"loginInvalid"`
+	IsLoginTaken   bool `json:"isLoginTaken"`
+	IsLoginInvalid bool `json:"isLoginInvalid"`
 }
 
 type LoginUserInput struct {
-	ID string `json:"id"`
+	Password string `json:"password"`
+}
+
+type LoginUserPayload struct {
+	User  *User                  `json:"user"`
+	Token *string                `json:"token"`
+	Error *LoginUserPayloadError `json:"error"`
+}
+
+type LoginUserPayloadError struct {
+	IsPasswordIncorrect bool `json:"isPasswordIncorrect"`
 }
 
 type RefreshTokenInput struct {
