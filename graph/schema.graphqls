@@ -13,6 +13,11 @@ type Query {
 }
 
 input LoginUserInput {
+  login: String!
+
+  # TODO: Support this
+  # email: String
+
   # TODO: Obviously this shouldn't be a raw string
   # We should hash with a nonce on the client and send that
   password: String!
@@ -52,8 +57,13 @@ type LoginUserPayloadError {
   isPasswordIncorrect: Boolean!
 }
 
+type RefreshTokenPayload {
+  user: User
+  token: String
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload!
   loginUser(input: LoginUserInput!): LoginUserPayload!
-  refreshToken(input: RefreshTokenInput!): User!
+  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload!
 }

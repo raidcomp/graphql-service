@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/99designs/gqlgen v0.17.20
 	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/raidcomp/users-service v0.0.0-20221021040634-2b938f0b1041
+	github.com/raidcomp/users-service v0.0.0-20221021210913-31a88598d412
 	github.com/vektah/gqlparser/v2 v2.5.1
 	google.golang.org/grpc v1.50.1
 )

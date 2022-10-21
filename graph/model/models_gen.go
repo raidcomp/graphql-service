@@ -24,6 +24,7 @@ type CreateUserPayloadError struct {
 }
 
 type LoginUserInput struct {
+	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
@@ -39,6 +40,11 @@ type LoginUserPayloadError struct {
 
 type RefreshTokenInput struct {
 	Token string `json:"token"`
+}
+
+type RefreshTokenPayload struct {
+	User  *User   `json:"user"`
+	Token *string `json:"token"`
 }
 
 type User struct {

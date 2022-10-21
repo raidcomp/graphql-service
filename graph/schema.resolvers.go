@@ -5,12 +5,11 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/raidcomp/graphql-service/auth"
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
-	"github.com/raidcomp/graphql-service/middleware"
 	users_service "github.com/raidcomp/users-service/proto"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -18,8 +17,9 @@ import (
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error) {
 	createUserResp, err := r.UsersClient.CreateUser(ctx, &users_service.CreateUserRequest{
-		Email: input.Email,
-		Login: input.Login,
+		Email:    input.Email,
+		Login:    input.Login,
+		Password: input.Password,
 	})
 	if err != nil {
 		return nil, gqlerror.Errorf("error creating user")
@@ -44,13 +44,8 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 // LoginUser is the resolver for the loginUser field.
 func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserInput) (*model.LoginUserPayload, error) {
-	userID := middleware.UserID(ctx)
-	if userID == "" {
-		return nil, nil
-	}
-
 	_, err := r.UsersClient.CheckUserPassword(ctx, &users_service.CheckUserPasswordRequest{
-		Id:       userID,
+		Login:    input.Login,
 		Password: input.Password,
 	})
 	if err != nil {
@@ -58,7 +53,19 @@ func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserI
 	}
 
 	// We're good, generate token for user
-	token, err := auth.GenerateToken(ctx, userID)
+	getUserResponse, err := r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
+		Login: input.Login,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if getUserResponse.User == nil {
+		// TODO: Better error name
+		return nil, errors.New("how??")
+	}
+
+	token, err := auth.GenerateToken(ctx, getUserResponse.User.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +78,25 @@ func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserI
 }
 
 // RefreshToken is the resolver for the refreshToken field.
-func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: RefreshToken - refreshToken"))
+func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.RefreshTokenPayload, error) {
+	userID, _, err := auth.ParseToken(input.Token)
+	if err != nil {
+		return nil, gqlerror.Errorf("error parsing token")
+	}
+
+	if userID == "" {
+		return nil, gqlerror.Errorf("no token provided to refresh")
+	}
+
+	newToken, err := auth.GenerateToken(ctx, userID)
+	if err != nil {
+		return nil, gqlerror.Errorf("error generating token")
+	}
+
+	return &model.RefreshTokenPayload{
+		User:  nil, // TODO: get this I guess? Will need to create NewUserResolver(userID)
+		Token: &newToken,
+	}, nil
 }
 
 // User is the resolver for the user field.

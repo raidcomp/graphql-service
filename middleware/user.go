@@ -15,7 +15,7 @@ type user struct {
 }
 
 type UserAuthorizationMiddleware interface {
-	AuthorizeUserRequest(next http.Handler) http.Handler
+	Handle(next http.Handler) http.Handler
 }
 
 type userAuthorizationMiddlewareImpl struct{}
@@ -24,7 +24,7 @@ func NewUserAuthorizationMiddleware() UserAuthorizationMiddleware {
 	return userAuthorizationMiddlewareImpl{}
 }
 
-func (u userAuthorizationMiddlewareImpl) AuthorizeUserRequest(next http.Handler) http.Handler {
+func (u userAuthorizationMiddlewareImpl) Handle(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenStr := r.Header.Get(AUTHORIZATION_HEADER_KEY)
 

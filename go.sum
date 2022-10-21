@@ -103,12 +103,8 @@ github.com/mitchellh/mapstructure v1.3.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RR
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
-github.com/raidcomp/users-service v0.0.0-20221021040247-b2ab7ff99796 h1:0ld/DSDKlDXiXWcRsoC8dUPbMThkmu3bJnVAZnXrg9c=
-github.com/raidcomp/users-service v0.0.0-20221021040247-b2ab7ff99796/go.mod h1:mPDlteuTADdo+qCNLwC9X9wgfvAg8IbPTbiNCI06yE0=
-github.com/raidcomp/users-service v0.0.0-20221021040448-29012806b9f5 h1:NmFPXt9mL4zaZ8uvTJeTy2uQkoWBjLW7Y12afONR398=
-github.com/raidcomp/users-service v0.0.0-20221021040448-29012806b9f5/go.mod h1:mPDlteuTADdo+qCNLwC9X9wgfvAg8IbPTbiNCI06yE0=
-github.com/raidcomp/users-service v0.0.0-20221021040634-2b938f0b1041 h1:HOVK/dPeufDMPpO5dIhesh4RafXugpuM1tBph3Ewg7k=
-github.com/raidcomp/users-service v0.0.0-20221021040634-2b938f0b1041/go.mod h1:mPDlteuTADdo+qCNLwC9X9wgfvAg8IbPTbiNCI06yE0=
+github.com/raidcomp/users-service v0.0.0-20221021210913-31a88598d412 h1:DwjgAaUVJ7b9F+Jz4yCBG1+mOzhVphbSgpfs4EDwryI=
+github.com/raidcomp/users-service v0.0.0-20221021210913-31a88598d412/go.mod h1:mPDlteuTADdo+qCNLwC9X9wgfvAg8IbPTbiNCI06yE0=
 github.com/russross/blackfriday/v2 v2.1.0 h1:JIOH55/0cWyOuilr9/qlrm0BSXldqnqwMsf35Ld67mk=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=

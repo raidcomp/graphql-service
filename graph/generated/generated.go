@@ -75,6 +75,11 @@ type ComplexityRoot struct {
 		User func(childComplexity int, id *string, login *string) int
 	}
 
+	RefreshTokenPayload struct {
+		Token func(childComplexity int) int
+		User  func(childComplexity int) int
+	}
+
 	User struct {
 		CreatedTime func(childComplexity int) int
 		Email       func(childComplexity int) int
@@ -87,7 +92,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error)
 	LoginUser(ctx context.Context, input model.LoginUserInput) (*model.LoginUserPayload, error)
-	RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.User, error)
+	RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.RefreshTokenPayload, error)
 }
 type QueryResolver interface {
 	User(ctx context.Context, id *string, login *string) (*model.User, error)
@@ -219,6 +224,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.User(childComplexity, args["id"].(*string), args["login"].(*string)), true
 
+	case "RefreshTokenPayload.token":
+		if e.complexity.RefreshTokenPayload.Token == nil {
+			break
+		}
+
+		return e.complexity.RefreshTokenPayload.Token(childComplexity), true
+
+	case "RefreshTokenPayload.user":
+		if e.complexity.RefreshTokenPayload.User == nil {
+			break
+		}
+
+		return e.complexity.RefreshTokenPayload.User(childComplexity), true
+
 	case "User.createdTime":
 		if e.complexity.User.CreatedTime == nil {
 			break
@@ -340,6 +359,11 @@ type Query {
 }
 
 input LoginUserInput {
+  login: String!
+
+  # TODO: Support this
+  # email: String
+
   # TODO: Obviously this shouldn't be a raw string
   # We should hash with a nonce on the client and send that
   password: String!
@@ -379,10 +403,15 @@ type LoginUserPayloadError {
   isPasswordIncorrect: Boolean!
 }
 
+type RefreshTokenPayload {
+  user: User
+  token: String
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserPayload!
   loginUser(input: LoginUserInput!): LoginUserPayload!
-  refreshToken(input: RefreshTokenInput!): User!
+  refreshToken(input: RefreshTokenInput!): RefreshTokenPayload!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -1077,9 +1106,9 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.RefreshTokenPayload)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNRefreshTokenPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐRefreshTokenPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1090,18 +1119,12 @@ func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "login":
-				return ec.fieldContext_User_login(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "createdTime":
-				return ec.fieldContext_User_createdTime(ctx, field)
-			case "updatedTime":
-				return ec.fieldContext_User_updatedTime(ctx, field)
+			case "user":
+				return ec.fieldContext_RefreshTokenPayload_user(ctx, field)
+			case "token":
+				return ec.fieldContext_RefreshTokenPayload_token(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type RefreshTokenPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -1306,6 +1329,100 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RefreshTokenPayload_user(ctx context.Context, field graphql.CollectedField, obj *model.RefreshTokenPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RefreshTokenPayload_user(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.User, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RefreshTokenPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RefreshTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "login":
+				return ec.fieldContext_User_login(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "createdTime":
+				return ec.fieldContext_User_createdTime(ctx, field)
+			case "updatedTime":
+				return ec.fieldContext_User_updatedTime(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _RefreshTokenPayload_token(ctx context.Context, field graphql.CollectedField, obj *model.RefreshTokenPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RefreshTokenPayload_token(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RefreshTokenPayload_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RefreshTokenPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3355,13 +3472,21 @@ func (ec *executionContext) unmarshalInputLoginUserInput(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"password"}
+	fieldsInOrder := [...]string{"login", "password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "login":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("login"))
+			it.Login, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "password":
 			var err error
 
@@ -3648,6 +3773,35 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var refreshTokenPayloadImplementors = []string{"RefreshTokenPayload"}
+
+func (ec *executionContext) _RefreshTokenPayload(ctx context.Context, sel ast.SelectionSet, obj *model.RefreshTokenPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, refreshTokenPayloadImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RefreshTokenPayload")
+		case "user":
+
+			out.Values[i] = ec._RefreshTokenPayload_user(ctx, field, obj)
+
+		case "token":
+
+			out.Values[i] = ec._RefreshTokenPayload_token(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -4107,6 +4261,20 @@ func (ec *executionContext) unmarshalNRefreshTokenInput2githubᚗcomᚋraidcomp�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNRefreshTokenPayload2githubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐRefreshTokenPayload(ctx context.Context, sel ast.SelectionSet, v model.RefreshTokenPayload) graphql.Marshaler {
+	return ec._RefreshTokenPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRefreshTokenPayload2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐRefreshTokenPayload(ctx context.Context, sel ast.SelectionSet, v *model.RefreshTokenPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RefreshTokenPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4135,20 +4303,6 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNUser2githubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋraidcompᚋgraphqlᚑserviceᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._User(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

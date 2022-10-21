@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const SECRET_KEY = "LIGHT_GIVE_ME_STRENGTH"
+var SECRET_KEY = []byte("LIGHT_GIVE_ME_STRENGTH")
 
 const ISSUER_CLAIM_VALUE = "gql.raidcomp.io"
 const AUDIENCE_CLAIM_VALUE = "raidcomp.io"
@@ -44,7 +44,7 @@ func GenerateToken(ctx context.Context, userID string) (string, error) {
 	// TODO: Integrate with KMS
 	tokenString, err := token.SignedString(SECRET_KEY)
 	if err != nil {
-		log.Fatal("Error in Generating key")
+		log.Fatalf("Error in Generating key %v", err)
 		return "", err
 	}
 
