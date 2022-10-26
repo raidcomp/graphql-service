@@ -5,18 +5,17 @@ package graph
 
 import (
 	"context"
-	"errors"
-
 	"github.com/raidcomp/graphql-service/auth"
 	"github.com/raidcomp/graphql-service/graph/generated"
 	"github.com/raidcomp/graphql-service/graph/model"
+	"github.com/raidcomp/graphql-service/graph/resolvers"
 	users_service "github.com/raidcomp/users-service/proto"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserPayload, error) {
-	createUserResp, err := r.UsersClient.CreateUser(ctx, &users_service.CreateUserRequest{
+	createUserResp, err := r.Clients.UsersClient.CreateUser(ctx, &users_service.CreateUserRequest{
 		Email:    input.Email,
 		Login:    input.Login,
 		Password: input.Password,
@@ -26,25 +25,17 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 	}
 
 	token, err := auth.GenerateToken(ctx, createUserResp.User.Id)
-	if err != nil {
-		return nil, gqlerror.Errorf("error generating auth token for user")
-	}
+	// TODO: Handle error better
 
 	return &model.CreateUserPayload{
-		User: &model.User{
-			ID:          createUserResp.User.Id,
-			Login:       createUserResp.User.Login,
-			Email:       createUserResp.User.Email,
-			CreatedTime: createUserResp.User.CreatedAt.AsTime(),
-			UpdatedTime: createUserResp.User.UpdatedAt.AsTime(),
-		},
+		User:  resolvers.NewUserResolver(createUserResp.User),
 		Token: &token,
 	}, err
 }
 
 // LoginUser is the resolver for the loginUser field.
 func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserInput) (*model.LoginUserPayload, error) {
-	_, err := r.UsersClient.CheckUserPassword(ctx, &users_service.CheckUserPasswordRequest{
+	_, err := r.Clients.UsersClient.CheckUserPassword(ctx, &users_service.CheckUserPasswordRequest{
 		Login:    input.Login,
 		Password: input.Password,
 	})
@@ -52,29 +43,21 @@ func (r *mutationResolver) LoginUser(ctx context.Context, input model.LoginUserI
 		return nil, err
 	}
 
-	// We're good, generate token for user
-	getUserResponse, err := r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
+	getUserResponse, err := r.Clients.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
 		Login: input.Login,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	if getUserResponse.User == nil {
-		// TODO: Better error name
-		return nil, errors.New("how??")
-	}
-
 	token, err := auth.GenerateToken(ctx, getUserResponse.User.Id)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: Handle error better
 
 	return &model.LoginUserPayload{
-		User:  nil, // TODO: get this I guess? Will need to create NewUserResolver(userID)
+		User:  resolvers.NewUserResolver(getUserResponse.User),
 		Token: &token,
 		Error: nil,
-	}, nil
+	}, err
 }
 
 // RefreshToken is the resolver for the refreshToken field.
@@ -93,24 +76,25 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 		return nil, gqlerror.Errorf("error generating token")
 	}
 
+	user, err := resolvers.NewUserResolverByID(ctx, r.Clients, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.RefreshTokenPayload{
-		User:  nil, // TODO: get this I guess? Will need to create NewUserResolver(userID)
+		User:  user,
 		Token: &newToken,
 	}, nil
 }
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context, id *string, login *string) (*model.User, error) {
-	var getUserResp *users_service.GetUserResponse
+	var user *model.User
 	var err error
 	if id != nil {
-		getUserResp, err = r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
-			Id: *id,
-		})
+		user, err = resolvers.NewUserResolverByID(ctx, r.Clients, *id)
 	} else if login != nil {
-		getUserResp, err = r.UsersClient.GetUser(ctx, &users_service.GetUserRequest{
-			Login: *login,
-		})
+		user, err = resolvers.NewUserResolverByLogin(ctx, r.Clients, *login)
 	} else {
 		return nil, gqlerror.Errorf("id or login are required")
 	}
@@ -119,17 +103,7 @@ func (r *queryResolver) User(ctx context.Context, id *string, login *string) (*m
 		return nil, gqlerror.Errorf("error requesting user")
 	}
 
-	if getUserResp.User == nil {
-		return nil, nil
-	}
-
-	return &model.User{
-		ID:          getUserResp.User.Id,
-		Login:       getUserResp.User.Login,
-		Email:       getUserResp.User.Email,
-		CreatedTime: getUserResp.User.CreatedAt.AsTime(),
-		UpdatedTime: getUserResp.User.UpdatedAt.AsTime(),
-	}, nil
+	return user, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

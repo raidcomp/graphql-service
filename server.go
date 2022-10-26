@@ -23,9 +23,13 @@ func main() {
 
 	usersClient := clients.NewUsersClient()
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		UsersClient: usersClient,
-	}}))
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{
+		Resolvers: &graph.Resolver{
+			Clients: clients.Clients{
+				UsersClient: usersClient,
+			},
+		},
+	}))
 
 	authorizationMiddleware := middleware.NewUserAuthorizationMiddleware()
 
